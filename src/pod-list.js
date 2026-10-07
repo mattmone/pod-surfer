@@ -1,4 +1,6 @@
-import { LitElement, html, css, when, until } from "lit";
+import { LitElement, html, css } from "lit";
+import { when } from "lit/directives/when.js";
+import { until } from "lit/directives/until.js";
 import { EpisodeSelectEvent } from "./EpisodeSelectEvent.js";
 import { playPauseStyles } from "./play-pause.css.js";
 import { Temporal } from "@js-temporal/polyfill";
@@ -133,12 +135,8 @@ class PodList extends LitElement {
   }
 
   async delete(episode) {
-    const { get, set } = await import("idb-keyval");
-    const episodes = (await get("in-progress-episodes")) || [];
-    set(
-      "in-progress-episodes",
-      episodes.filter((ep) => ep.id !== episode.id)
-    );
+    const { removeInProgressEpisode } = await import("./storage.js");
+    await removeInProgressEpisode(episode.id);
     this.items = this.items.filter((ep) => ep.id !== episode.id);
   }
 

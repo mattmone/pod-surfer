@@ -1,4 +1,5 @@
-import { html, css, LitElement, when } from "lit";
+import { html, css, LitElement } from "lit";
+import { when } from "lit/directives/when.js";
 import { EpisodeSelectEvent } from "./EpisodeSelectEvent.js";
 import { ViewTransitionMixin } from "./ViewTransitionMixin.js";
 
@@ -110,12 +111,12 @@ export class EpisodePage extends ViewTransitionMixin(LitElement) {
   updated(changedProperties) {
     if (changedProperties.has("episode")) {
       this._imageLoaded = false;
-      import("idb-keyval").then(({ get, set }) => {
-        get(`episode-${this.episode.title}-time`).then((time) => {
+      import("./storage.js").then(({ getEpisodeTime, getPlaybackRate }) => {
+        getEpisodeTime(this.episode.title).then((time) => {
           if (!time) return;
           this.audioTime = time;
         });
-        get(`playback-rate`).then((rate) => {
+        getPlaybackRate().then((rate) => {
           if (!rate) return;
           this.playbackRate = rate;
         });
@@ -156,13 +157,13 @@ export class EpisodePage extends ViewTransitionMixin(LitElement) {
   }
 
   async handleTimeUpdate({ detail: { time } }) {
-    const { set } = await import("idb-keyval");
-    set(`episode-${this.episode.title}-time`, time);
+    const { setEpisodeTime } = await import("./storage.js");
+    await setEpisodeTime(this.episode.title, time);
   }
 
   async handlePlaybackRateChange({ detail: { rate } }) {
-    const { set } = await import("idb-keyval");
-    set(`playback-rate`, rate);
+    const { setPlaybackRate } = await import("./storage.js");
+    await setPlaybackRate(rate);
   }
 
   render() {

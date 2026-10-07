@@ -1,4 +1,6 @@
-import { LitElement, html, css, when, ref, createRef } from "lit";
+import { LitElement, html, css } from "lit";
+import { when } from "lit/directives/when.js";
+import { ref, createRef } from "lit/directives/ref.js";
 import { Temporal } from "@js-temporal/polyfill";
 import { playPauseStyles } from "./play-pause.css.js";
 

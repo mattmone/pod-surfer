@@ -6134,20 +6134,7 @@ var RangeRequestsPlugin = class {
 
 // src/service-worker.js
 precacheAndRoute([
-  ...[{"revision":"afac1e33a7f2279437b4279dace5ef19","url":"build.js"},{"revision":"523fbf9a5cfe46831404a570f4724009","url":"dist/index.js"},{"revision":"89e1f0bc55f437a134ac5f874ad389f0","url":"src/episode-page.js"},{"revision":"aa9abca8509a085e4e14a5ae9751ec74","url":"src/EpisodeCompletedEvent.js"},{"revision":"e721aa96d5ef79c3db931f6bdcfc98d5","url":"src/EpisodeSelectEvent.js"},{"revision":"f01e3f1bf3702349321f4b0e6b6967ae","url":"src/index.js"},{"revision":"b907abce228692838d9e9974182c1ce8","url":"src/play-pause.css.js"},{"revision":"6fb400a198715efa72d45da94e998faa","url":"src/pod-audio.js"},{"revision":"5084a80a2aa6b8f957ffd43f449d393f","url":"src/pod-list.js"},{"revision":"b8af9e625f5eccf1e1d9e292a9d07335","url":"src/pod-scroller.js"},{"revision":"e30eed22fe1b97ca9766c75f860d34fa","url":"src/pod-surfer.js"},{"revision":"ea337e51aa952a6f1ac91f7d86b2abdd","url":"src/podcast-page.js"},{"revision":"22a130974e38bb8ed6798302f3d9312e","url":"src/PodSelectEvent.js"},{"revision":"8bace22aeca226d3af31d129fa2b7ce7","url":"src/service-worker.js"},{"revision":"567552ae5ad7893023c9b7d813adba76","url":"src/swipe-action.js"},{"revision":"bf6fcad0e6c60d6c829a7fc00f421786","url":"src/ViewTransitionMixin.js"},{"revision":"ce8dc99fc6ae50e918c419232b5d18de","url":"index.html"}],
-  {
-    url: "https://ga.jspm.io/npm:@js-temporal/polyfill@0.4.4/dist/index.esm.js",
-    revision: null
-  },
-  {
-    url: "https://ga.jspm.io/npm:idb-keyval@6.2.1/dist/index.js",
-    revision: null
-  },
-  {
-    url: "https://cdn.jsdelivr.net/gh/lit/dist@3/all/lit-all.min.js",
-    revision: null
-  },
-  { url: "https://ga.jspm.io/npm:jsbi@4.3.0/dist/jsbi-umd.js", revision: null }
+  ...[{"revision":"b241250c16bdfe1fb29ef95291b8acf7","url":"build.js"},{"revision":"195f9b3a5749f1d1c72fffbfd5354cb0","url":"dist/index.js"},{"revision":"aa8e59916242122d53826714e5fcb7c9","url":"src/api.js"},{"revision":"3a46d8e4cd73f7dc35828f2d842df10d","url":"src/episode-page.js"},{"revision":"4af228c4c1b044f26024f61b78b06a47","url":"src/EpisodeCompletedEvent.js"},{"revision":"9155b4b9bf14b5a8699dbe9e4decb9a2","url":"src/EpisodeSelectEvent.js"},{"revision":"7994c9ffed9a9e43a4162f93dc76a706","url":"src/index.js"},{"revision":"585139cd64fe06e9ceb4798561c9cc1b","url":"src/play-pause.css.js"},{"revision":"b23269e3b231f445b3fdb0cf6df20048","url":"src/pod-audio.js"},{"revision":"5ad4ecd48cda87873b4cde74fa144a79","url":"src/pod-list.js"},{"revision":"e6c765520778dda6130d16d988eafa6e","url":"src/pod-scroller.js"},{"revision":"1b0fa208f0944bd59fbbcf11dcb4b885","url":"src/pod-surfer.js"},{"revision":"b3a430716e740fd47afe4a22434e0acb","url":"src/podcast-page.js"},{"revision":"63f207b7597f1839e130bcedada1d2c5","url":"src/PodSelectEvent.js"},{"revision":"7905514f8316d56e8da9122ca1fe434d","url":"src/service-worker.js"},{"revision":"79561296db6706b2c9fdf501afaeb045","url":"src/storage.js"},{"revision":"7588200a56a4e73a5305442a70a9f1f3","url":"src/swipe-action.js"},{"revision":"f1e56ac6a0e2f15eb1c67e70f58bb29d","url":"src/ViewTransitionMixin.js"},{"revision":"f1941d943b8ed311606036a85ecf3404","url":"index.html"},{"revision":"612f5c14676029b67d8dfdf11d43090c","url":"badge.png"},{"revision":"633837f7cf331c27ceace55134feb29a","url":"icon512_maskable.png"},{"revision":"49b06038d95886ae11022683bb91fe04","url":"icon512_rounded.png"},{"revision":"fb9645e4f0658e2ebe9c20544b705083","url":"mobile-screenshot.png"},{"revision":"dddc7d73647402f00650ddf07a17dd9f","url":"manifest.json"},{"revision":"a50956eed2e7a4b4c06aee5fd8b0316e","url":"package-lock.json"},{"revision":"09c2644629afb9f7392a43a23ea552ff","url":"package.json"}]
 ]);
 setCatchHandler(({ event, request }) => {
   console.log(event, request);

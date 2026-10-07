@@ -1,5 +1,7 @@
-import { html, LitElement, css, when } from "lit";
-import { get, set } from "idb-keyval";
+import { html, LitElement, css } from "lit";
+import { when } from "lit/directives/when.js";
+import { getSubscription, setSubscription } from "./storage.js";
+import { fetchWithTimeout, showToast } from "./api.js";
 
 export class PodcastPage extends LitElement {
   static get properties() {
@@ -141,8 +143,8 @@ export class PodcastPage extends LitElement {
       this.registration = await navigator.serviceWorker.ready;
     const subscription = await this.registration.pushManager.getSubscription();
     if (subscription !== null) {
-      const { notifiers } = await get(`pod-surfer/subscription`);
-      this._isSubscribed = notifiers.includes(this.podcast.title);
+      const localSubscription = await getSubscription();
+      this._isSubscribed = localSubscription?.notifiers?.includes(this.podcast.title) || false;
     }
   }
 
@@ -150,10 +152,10 @@ export class PodcastPage extends LitElement {
     if (this._isSubscribed) return;
     this._isSubscribed = true;
     try {
-      const localSubscription = await get(`pod-surfer/subscription`);
-      let { userId, publicKey, subscription } = localSubscription;
+      const localSubscription = await getSubscription();
+      let { userId, publicKey, subscription } = localSubscription || {};
       if (!localSubscription) {
-        const initializeResult = await fetch(
+        const initializeResult = await fetchWithTimeout(
           "https://oracle.mone.dev/notifications/initialize",
           {
             method: "POST",
@@ -165,13 +167,13 @@ export class PodcastPage extends LitElement {
         ).then((r) => r.json());
         userId = initializeResult.userId;
         publicKey = initializeResult.publicKey;
-        const subscription = await this.registration.pushManager.subscribe({
+        subscription = await this.registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: publicKey,
         });
       }
 
-      const notifiers = await fetch(
+      const notifiers = await fetchWithTimeout(
         "https://oracle.mone.dev/notifications/subscribe",
         {
           method: "POST",
@@ -185,14 +187,16 @@ export class PodcastPage extends LitElement {
           }),
         }
       );
-      await set(`pod-surfer/subscription`, {
+      await setSubscription({
         userId,
         publicKey,
         notifiers,
       });
+      showToast("Subscribed to push notifications");
     } catch (error) {
       console.error(error);
       this._isSubscribed = false;
+      showToast("Failed to subscribe to notifications", true);
     }
   }
 
@@ -204,7 +208,7 @@ export class PodcastPage extends LitElement {
         await this.registration.pushManager.getSubscription();
       if (!subscription) return;
       await subscription.unsubscribe();
-      await fetch("https://oracle.mone.dev/notifications/unsubscribe", {
+      await fetchWithTimeout("https://oracle.mone.dev/notifications/unsubscribe", {
         method: "POST",
         headers: new Headers({ "content-type": "application/json" }),
         body: JSON.stringify({
@@ -212,10 +216,12 @@ export class PodcastPage extends LitElement {
           subscription: subscription.toJSON(),
         }),
       });
-      await set(`pod-surfer/subscription`, null);
+      await setSubscription(null);
+      showToast("Unsubscribed from push notifications");
     } catch (error) {
       console.error(error);
       this._isSubscribed = true;
+      showToast("Failed to unsubscribe", true);
     }
   }
 

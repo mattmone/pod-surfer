@@ -15,19 +15,6 @@ import { RangeRequestsPlugin } from "workbox-range-requests";
 
 precacheAndRoute([
   ...self.__WB_MANIFEST,
-  {
-    url: "https://ga.jspm.io/npm:@js-temporal/polyfill@0.4.4/dist/index.esm.js",
-    revision: null,
-  },
-  {
-    url: "https://ga.jspm.io/npm:idb-keyval@6.2.1/dist/index.js",
-    revision: null,
-  },
-  {
-    url: "https://cdn.jsdelivr.net/gh/lit/dist@3/all/lit-all.min.js",
-    revision: null,
-  },
-  { url: "https://ga.jspm.io/npm:jsbi@4.3.0/dist/jsbi-umd.js", revision: null },
 ]);
 
 setCatchHandler(({ event, request }) => {

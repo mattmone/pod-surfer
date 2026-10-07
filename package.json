@@ -10,7 +10,10 @@
     "build-sw": "npx workbox-cli injectManifest ./workbox-config.cjs"
   },
   "dependencies": {
+    "@js-temporal/polyfill": "^0.5.1",
     "esbuild": "^0.24.2",
+    "idb-keyval": "^6.3.0",
+    "lit": "^3.3.3",
     "workbox-background-sync": "^5.1.4",
     "workbox-cacheable-response": "^5.1.4",
     "workbox-cli": "^7.1.0",
