@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="icon512_maskable.png" />
+    <link rel="manifest" href="manifest.json" />
+    <script type="importmap">
+      {
+        "imports": {
+          "@js-temporal/polyfill": "https://ga.jspm.io/npm:@js-temporal/polyfill@0.4.4/dist/index.esm.js",
+          "idb-keyval": "https://ga.jspm.io/npm:idb-keyval@6.2.1/dist/index.js",
+          "lit": "https://cdn.jsdelivr.net/gh/lit/dist@3/all/lit-all.min.js"
+        },
+        "scopes": {
+          "https://ga.jspm.io/": {
+            "jsbi": "https://ga.jspm.io/npm:jsbi@4.3.0/dist/jsbi-umd.js"
+          }
+        }
+      }
+    </script>
+    <script type="module" src="./dist/index.js">
+      
+    </script>
+    <style>
+      :root {
+        --primarycolor: oklch(62.79% 0.177 255.18);
+      }
+      ::view-transition-group(header-image) {
+        transition-duration: 0.3s;
+        z-index: 5;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      html,
+      body {
+        display: grid;
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+        & * {
+          box-sizing: border-box;
+        }
+      }
+      body {
+        background-color: white;
+        &:has(podcast-page[hidden]) {
+          background-color: var(--primarycolor, #fff);
+        }
+        gap: 8px;
+        grid-template-areas:
+          "header"
+          "body";
+        grid-template-rows: max-content minmax(0, 1fr);
+        &:has(episode-page[hidden]):has(podcast-page[hidden]) {
+          & #body {
+            view-transition-name: body;
+            opacity: 1;
+          }
+          & #top-head {
+            view-transition-name: header;
+          }
+        }
+        & #body {
+          padding: 16px 8px;
+          border-radius: 24px 24px 0 0;
+          background-color: #fff;
+          display: grid;
+          gap: 8px;
+          opacity: 0;
+          grid-area: body;
+          grid-template-areas:
+            "in-progress"
+            "recently-released"
+            "my-podcasts";
+          grid-template-rows: repeat(3, max-content);
+        }
+        & #top-head {
+          padding: 16px 8px;
+          grid-area: header;
+          color: #fff;
+          & h1 {
+            margin: 0;
+            padding: 0;
+            font-size: 24px;
+          }
+        }
+        & #in-progress {
+          grid-area: in-progress;
+        }
+        & #recently-released {
+          grid-area: recently-released;
+        }
+        & #my-podcasts {
+          grid-area: my-podcasts;
+          & header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            & button {
+              background: none;
+              border: none;
+              padding: 0;
+              margin: 0;
+            }
+          }
+        }
+        & header {
+          padding: 8px 0;
+          font-weight: bold;
+          font-family: sans-serif;
+        }
+        & pod-scroller {
+          height: 23vh;
+        }
+      }
+      dialog#add-podcast[open] {
+        padding: 16px;
+        border-radius: 8px;
+        background-color: #fff;
+        border: 1px solid black;
+        width: 90vw;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        &::backdrop {
+          background-color: rgba(0, 0, 0, 0.8);
+        }
+        & form {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          width: 100%;
+        }
+        & h1 {
+          margin: 0;
+          padding: 0;
+          font-size: 24px;
+        }
+        & input {
+          width: 100%;
+          padding: 8px;
+        }
+        & div {
+          display: flex;
+          gap: 8px;
+          justify-content: flex-end;
+        }
+        & button {
+          background: none;
+          border: 1px solid black;
+          padding: 8px 16px;
+          border-radius: 8px;
+          &[type="submit"] {
+            background-color: var(--primarycolor, #fff);
+            color: #fff;
+          }
+        }
+      }
+    </style>
+    <title>Pod Surfer</title>
+  </head>
+  <body>
+    <header id="top-head">
+      <h1>Welcome to Pod Surfer</h1>
+    </header>
+    <div id="body">
+      <section id="in-progress">
+        <header>In Progress Episodes</header>
+        <main>
+          <pod-list>
+            <p>No episodes in progress.</p>
+          </pod-list>
+        </main>
+      </section>
+      <section id="recently-released">
+        <header>Recently Released Episodes</header>
+        <main>
+          <pod-scroller type="episode"></pod-scroller>
+        </main>
+      </section>
+      <section id="my-podcasts">
+        <header><span>My Podcasts</span><button>➕</button></header>
+        <main>
+          <pod-scroller type="podcast"></pod-scroller>
+        </main>
+      </section>
+    </div>
+    <episode-page hidden></episode-page>
+    <podcast-page hidden></podcast-page>
+    <dialog id="add-podcast">
+      <header>
+        <h1>Add Podcast</h1>
+      </header>
+      <main>
+        <form method="dialog">
+          <fieldset>
+            <legend>RSS Feed URL</legend>
+            <input type="text" name="rss-feed" />
+          </fieldset>
+          <div>
+            <button value="cancel" formmethod="dialog">Cancel</button>
+            <button type="submit">Add</button>
+          </div>
+        </form>
+      </main>
+    </dialog>
+  </body>
+</html>
