@@ -1,4 +1,5 @@
 import { LitElement, html, css } from "lit";
+import { getPlaybackRateForEpisode, setPlaybackRateForEpisode } from "./storage.js";
 import { when } from "lit/directives/when.js";
 import { ref, createRef } from "lit/directives/ref.js";
 import { Temporal } from "@js-temporal/polyfill";
@@ -119,7 +120,7 @@ export class PodAudio extends LitElement {
     this.playbackRate = 1;
   }
 
-  updated(changedProperties) {
+  async updated(changedProperties) {
     if (changedProperties.has("playbackRate") || changedProperties.has("url")) {
       this._audioRef.value.playbackRate = this.playbackRate;
     }
@@ -140,6 +141,9 @@ export class PodAudio extends LitElement {
       path += 'Z")';
       this.shadowRoot.querySelector("path").setAttribute("style", `d: ${path}`);
       this._setupMediaSession();
+      // Load per‑episode playback rate (default 1)
+      this.playbackRate = await getPlaybackRateForEpisode(this.url);
+
     }
     if (changedProperties.has("audioTime")) {
       this.seekTo(this.audioTime);
@@ -218,8 +222,10 @@ export class PodAudio extends LitElement {
     this.playing = false;
   }
 
-  handlePlaybackRateChange() {
-    this.playbackRate += 0.1;
+  async handlePlaybackRateChange() {
+    this.playbackRate = Number((this.playbackRate + 0.1).toFixed(1));
+    // Persist per‑episode rate
+    await setPlaybackRateForEpisode(this.url, this.playbackRate);
     this.dispatchEvent(
       new CustomEvent("playbackrate-changed", {
         detail: { rate: this.playbackRate },

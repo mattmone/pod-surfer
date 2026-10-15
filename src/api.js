@@ -1,3 +1,9 @@
+/**
+ * @param {string} url
+ * @param {RequestInit} [options={}]
+ * @param {number} [timeoutMs=8000]
+ * @returns {Promise<Response>}
+ */
 export async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -21,8 +27,15 @@ export async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
   }
 }
 
+/**
+ * @param {string} message
+ * @param {boolean} [isError=false]
+ * @returns {void}
+ */
 export function showToast(message, isError = false) {
-  let toast = document.querySelector("#pod-toast");
+  let toast = /** @type {HTMLElement & { _timeout?: ReturnType<typeof setTimeout> } | null} */ (
+    document.querySelector("#pod-toast")
+  );
   if (!toast) {
     toast = document.createElement("div");
     toast.id = "pod-toast";
@@ -51,9 +64,11 @@ export function showToast(message, isError = false) {
   toast.style.opacity = "1";
   toast.style.transform = "translateX(-50%) translateY(0)";
 
-  clearTimeout(toast._timeout);
+  if (toast._timeout) clearTimeout(toast._timeout);
   toast._timeout = setTimeout(() => {
-    toast.style.opacity = "0";
-    toast.style.transform = "translateX(-50%) translateY(10px)";
+    if (toast) {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateX(-50%) translateY(10px)";
+    }
   }, 4000);
 }

@@ -46,3 +46,10 @@ npm install
 # Build client bundle and inject Service Worker manifest
 npm run build
 ```
+
+---
+
+## 🧪 Testing Strategy
+
+For the complete testing roadmap, tooling stack, mocking requirements, and unit/integration/E2E test plans, see [TESTING.md](file:///c:/Users/mmone/Projects/pod-surfer/TESTING.md).
+
