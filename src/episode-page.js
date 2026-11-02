@@ -111,10 +111,10 @@ export class EpisodePage extends ViewTransitionMixin(LitElement) {
   updated(changedProperties) {
     if (changedProperties.has("episode")) {
       this._imageLoaded = false;
+      this.audioTime = undefined;
       import("./storage.js").then(({ getEpisodeTime, getPlaybackRate }) => {
         getEpisodeTime(this.episode.title).then((time) => {
-          if (!time) return;
-          this.audioTime = time;
+          this.audioTime = time ?? 0;
         });
         getPlaybackRate().then((rate) => {
           if (!rate) return;
@@ -138,25 +138,28 @@ export class EpisodePage extends ViewTransitionMixin(LitElement) {
           this._imageLoaded = true;
           resolve(true);
         },
-        { once: true }
+        { once: true },
       );
     });
   }
 
   async handleEnded() {
-    const { EpisodeCompletedEvent } = await import(
-      "./EpisodeCompletedEvent.js"
-    );
+    const { EpisodeCompletedEvent } =
+      await import("./EpisodeCompletedEvent.js");
     this.dispatchEvent(new EpisodeCompletedEvent(this.episode));
     this.dispatchEvent(
       new CustomEvent("episode-close", {
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
   async handleTimeUpdate({ detail: { time } }) {
+    if (typeof time !== "number" || isNaN(time)) return;
+    // Prevent premature 0-timestamp updates from overwriting a stored resume position
+    if (time === 0 && (this.audioTime ?? 0) > 0) return;
+    this.audioTime = time;
     const { setEpisodeTime } = await import("./storage.js");
     await setEpisodeTime(this.episode.title, time);
   }
@@ -174,7 +177,7 @@ export class EpisodePage extends ViewTransitionMixin(LitElement) {
               new CustomEvent("episode-close", {
                 bubbles: true,
                 composed: true,
-              })
+              }),
             )}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
@@ -203,7 +206,7 @@ export class EpisodePage extends ViewTransitionMixin(LitElement) {
           image=${this.episode.itunes?.image ?? this.episode.podcastImage}
           title=${this.episode.title}
           author=${this.episode.creator}
-          .audioTime=${this.audioTime ?? 0}
+          .audioTime=${this.audioTime}
           .playbackRate=${this.playbackRate ?? 1}
           @time-updated=${this.handleTimeUpdate}
           @playbackrate-changed=${this.handlePlaybackRateChange}

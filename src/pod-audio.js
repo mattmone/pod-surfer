@@ -118,6 +118,7 @@ export class PodAudio extends LitElement {
     this.currentTime = "00:00";
     this.maxDuration = "00:00";
     this.playbackRate = 1;
+    this._pendingSeekTime = null;
   }
 
   async updated(changedProperties) {
@@ -125,6 +126,10 @@ export class PodAudio extends LitElement {
       this._audioRef.value.playbackRate = this.playbackRate;
     }
     if (changedProperties.has("url")) {
+      this._pendingSeekTime =
+        typeof this.audioTime === "number" && this.audioTime > 0
+          ? this.audioTime
+          : null;
       let path = 'path("M 0 0 L 0 100 L 100 100 L 100 0';
       for (
         let rectIndex = 0;
@@ -146,7 +151,9 @@ export class PodAudio extends LitElement {
 
     }
     if (changedProperties.has("audioTime")) {
-      this.seekTo(this.audioTime);
+      if (typeof this.audioTime === "number" && !isNaN(this.audioTime)) {
+        this.seekTo(this.audioTime);
+      }
     }
     if (
       changedProperties.has("playbackRate") ||
@@ -200,13 +207,39 @@ export class PodAudio extends LitElement {
   }
 
   handleDurationChange() {
+    if (!this._audioRef?.value) return;
     this.audioDuration = this._audioRef.value.duration;
-    const maxDuration = Temporal.Duration.from({
-      seconds: Math.floor(this._audioRef.value.duration),
-    }).round({ largestUnit: "minutes" });
-    this.maxDuration = `${`${maxDuration.minutes}`
-      .padStart(2, "0")
-      .slice(-2)}:${`${maxDuration.seconds}`.padStart(2, "0").slice(-2)}`;
+    if (this._audioRef.value.duration) {
+      const maxDuration = Temporal.Duration.from({
+        seconds: Math.floor(this._audioRef.value.duration),
+      }).round({ largestUnit: "minutes" });
+      this.maxDuration = `${`${maxDuration.minutes}`
+        .padStart(2, "0")
+        .slice(-2)}:${`${maxDuration.seconds}`.padStart(2, "0").slice(-2)}`;
+    }
+  }
+
+  handleLoadedMetadata() {
+    this.handleDurationChange();
+    const audio = this._audioRef?.value;
+    if (
+      audio &&
+      this._pendingSeekTime !== null &&
+      this._pendingSeekTime !== undefined &&
+      this._pendingSeekTime > 0
+    ) {
+      const timeToSeek = this._pendingSeekTime;
+      this._pendingSeekTime = null;
+      try {
+        const targetTime = Math.max(
+          0,
+          audio.duration ? Math.min(timeToSeek, audio.duration) : timeToSeek
+        );
+        audio.currentTime = targetTime;
+      } catch (err) {
+        console.warn("Failed to apply pending seek time on loadedmetadata:", err);
+      }
+    }
   }
 
   handleEnded() {
@@ -234,22 +267,55 @@ export class PodAudio extends LitElement {
   }
 
   handleTimeUpdate() {
-    this.audioCurrentTime = this._audioRef.value.currentTime;
+    const audio = this._audioRef?.value;
+    if (!audio) return;
+
+    // Suppress initial 0-second timeupdate if we have a pending seek to a saved position
+    if (
+      this._pendingSeekTime !== null &&
+      this._pendingSeekTime > 0 &&
+      audio.currentTime === 0
+    ) {
+      return;
+    }
+
+    this.audioCurrentTime = audio.currentTime;
     const currentTime = Temporal.Duration.from({
-      seconds: Math.floor(this._audioRef.value.currentTime),
+      seconds: Math.floor(audio.currentTime),
     }).round({ largestUnit: "minutes" });
     this.currentTime = `${`${currentTime.minutes}`
       .padStart(2, "0")
       .slice(-2)}:${`${currentTime.seconds}`.padStart(2, "0").slice(-2)}`;
     this.dispatchEvent(
       new CustomEvent("time-updated", {
-        detail: { time: this._audioRef.value.currentTime },
+        detail: { time: audio.currentTime },
       })
     );
   }
 
   seekTo(time) {
-    this._audioRef.value.currentTime = time;
+    if (typeof time !== "number" || isNaN(time)) return;
+    const audio = this._audioRef?.value;
+    if (!audio) {
+      this._pendingSeekTime = time;
+      return;
+    }
+
+    if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) {
+      try {
+        const targetTime = Math.max(
+          0,
+          audio.duration ? Math.min(time, audio.duration) : time
+        );
+        audio.currentTime = targetTime;
+        this._pendingSeekTime = null;
+      } catch (err) {
+        console.warn("Could not set currentTime on audio element:", err);
+      }
+    } else {
+      // Audio element metadata not yet loaded; queue seek
+      this._pendingSeekTime = time;
+    }
   }
 
   toggleAudio() {
@@ -265,10 +331,14 @@ export class PodAudio extends LitElement {
         min="0"
         max=${this._audioRef.value?.duration}
         value=${this._audioRef.value?.currentTime}
-        @click=${(event) =>
-          this.seekTo(
-            (this._audioRef.value?.duration * event.offsetX) / this.offsetWidth
-          )}
+        @click=${(event) => {
+          const audio = this._audioRef?.value;
+          if (audio?.duration) {
+            this.seekTo(
+              (audio.duration * event.offsetX) / this.offsetWidth
+            );
+          }
+        }}
       ></progress>
       <svg viewBox="0 0 100 100" id="progress-cover" preserveAspectRatio="none">
         <path></path>
@@ -280,7 +350,10 @@ export class PodAudio extends LitElement {
       </button>
       <button
         id="back"
-        @click=${() => this.seekTo(this._audioRef.value.currentTime - 10)}
+        @click=${() =>
+          this.seekTo(
+            Math.max(0, (this._audioRef.value?.currentTime ?? 0) - 10)
+          )}
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
           <path
@@ -302,7 +375,8 @@ export class PodAudio extends LitElement {
       </button>
       <button
         id="forward"
-        @click=${() => this.seekTo(this._audioRef.value.currentTime + 10)}
+        @click=${() =>
+          this.seekTo((this._audioRef.value?.currentTime ?? 0) + 10)}
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
           <path
@@ -313,12 +387,13 @@ export class PodAudio extends LitElement {
       <audio
         ${ref(this._audioRef)}
         src=${this.url}
-        crossorigin
-        preload
+        preload="metadata"
         @play=${this.handlePlay}
         @pause=${this.handlePause}
+        @loadedmetadata=${this.handleLoadedMetadata}
         @durationchange=${this.handleDurationChange}
-        @loadeddata=${this.handleDurationChange}
+        @loadeddata=${this.handleLoadedMetadata}
+        @canplay=${this.handleLoadedMetadata}
         @canplaythrough=${this.handleDurationChange}
         @timeupdate=${this.handleTimeUpdate}
         @ended=${this.handleEnded}

@@ -10,7 +10,7 @@ import {
 } from "workbox-strategies";
 import { CacheableResponse } from "workbox-cacheable-response";
 import { ExpirationPlugin } from "workbox-expiration";
-import { BackgroundSyncPlugin } from "workbox-background-sync";
+
 import { RangeRequestsPlugin } from "workbox-range-requests";
 
 precacheAndRoute([
@@ -25,6 +25,18 @@ self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => key === "audio-cache")
+          .map((key) => caches.delete(key))
+      )
+    )
+  );
 });
 
 // @link https://flaviocopes.com/push-api/
@@ -81,9 +93,14 @@ self.addEventListener("push", function (event) {
 });
 
 registerRoute(
-  ({ request }) => request.destination === "audio",
+  ({ request, url }) =>
+    request.destination === "audio" ||
+    url.pathname.includes("/podsurfer/audio/") ||
+    url.pathname.endsWith(".mp3") ||
+    url.pathname.endsWith(".m4a") ||
+    url.pathname.endsWith(".aac"),
   new CacheFirst({
-    cacheName: "audio-cache",
+    cacheName: "audio-cache-v2",
     plugins: [
       new CacheableResponse({
         statuses: [200],
@@ -92,7 +109,6 @@ registerRoute(
         maxAgeSeconds: 60 * 60 * 24 * 365,
         maxEntries: 60,
       }),
-      new BackgroundSyncPlugin(),
       new RangeRequestsPlugin(),
     ],
   })
