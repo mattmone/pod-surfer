@@ -1,5 +1,8 @@
 import { LitElement, html, css } from "lit";
-import { getPlaybackRateForEpisode, setPlaybackRateForEpisode } from "./storage.js";
+import {
+  getPlaybackRateForEpisode,
+  setPlaybackRateForEpisode,
+} from "./storage.js";
 import { when } from "lit/directives/when.js";
 import { ref, createRef } from "lit/directives/ref.js";
 import { Temporal } from "@js-temporal/polyfill";
@@ -148,10 +151,13 @@ export class PodAudio extends LitElement {
       this._setupMediaSession();
       // Load per‑episode playback rate (default 1)
       this.playbackRate = await getPlaybackRateForEpisode(this.url);
-
     }
     if (changedProperties.has("audioTime")) {
-      if (typeof this.audioTime === "number" && !isNaN(this.audioTime)) {
+      if (
+        typeof this.audioTime === "number" &&
+        !isNaN(this.audioTime) &&
+        Math.abs((this._audioRef.value?.currentTime ?? 0) - this.audioTime) > 1
+      ) {
         this.seekTo(this.audioTime);
       }
     }
@@ -233,11 +239,14 @@ export class PodAudio extends LitElement {
       try {
         const targetTime = Math.max(
           0,
-          audio.duration ? Math.min(timeToSeek, audio.duration) : timeToSeek
+          audio.duration ? Math.min(timeToSeek, audio.duration) : timeToSeek,
         );
         audio.currentTime = targetTime;
       } catch (err) {
-        console.warn("Failed to apply pending seek time on loadedmetadata:", err);
+        console.warn(
+          "Failed to apply pending seek time on loadedmetadata:",
+          err,
+        );
       }
     }
   }
@@ -262,7 +271,7 @@ export class PodAudio extends LitElement {
     this.dispatchEvent(
       new CustomEvent("playbackrate-changed", {
         detail: { rate: this.playbackRate },
-      })
+      }),
     );
   }
 
@@ -289,7 +298,7 @@ export class PodAudio extends LitElement {
     this.dispatchEvent(
       new CustomEvent("time-updated", {
         detail: { time: audio.currentTime },
-      })
+      }),
     );
   }
 
@@ -305,7 +314,7 @@ export class PodAudio extends LitElement {
       try {
         const targetTime = Math.max(
           0,
-          audio.duration ? Math.min(time, audio.duration) : time
+          audio.duration ? Math.min(time, audio.duration) : time,
         );
         audio.currentTime = targetTime;
         this._pendingSeekTime = null;
@@ -334,9 +343,7 @@ export class PodAudio extends LitElement {
         @click=${(event) => {
           const audio = this._audioRef?.value;
           if (audio?.duration) {
-            this.seekTo(
-              (audio.duration * event.offsetX) / this.offsetWidth
-            );
+            this.seekTo((audio.duration * event.offsetX) / this.offsetWidth);
           }
         }}
       ></progress>
@@ -352,7 +359,7 @@ export class PodAudio extends LitElement {
         id="back"
         @click=${() =>
           this.seekTo(
-            Math.max(0, (this._audioRef.value?.currentTime ?? 0) - 10)
+            Math.max(0, (this._audioRef.value?.currentTime ?? 0) - 10),
           )}
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
@@ -392,8 +399,6 @@ export class PodAudio extends LitElement {
         @pause=${this.handlePause}
         @loadedmetadata=${this.handleLoadedMetadata}
         @durationchange=${this.handleDurationChange}
-        @loadeddata=${this.handleLoadedMetadata}
-        @canplay=${this.handleLoadedMetadata}
         @canplaythrough=${this.handleDurationChange}
         @timeupdate=${this.handleTimeUpdate}
         @ended=${this.handleEnded}

@@ -159,9 +159,14 @@ export class EpisodePage extends ViewTransitionMixin(LitElement) {
     if (typeof time !== "number" || isNaN(time)) return;
     // Prevent premature 0-timestamp updates from overwriting a stored resume position
     if (time === 0 && (this.audioTime ?? 0) > 0) return;
-    this.audioTime = time;
-    const { setEpisodeTime } = await import("./storage.js");
-    await setEpisodeTime(this.episode.title, time);
+
+    // Throttle IndexedDB writes to once per second
+    const now = Date.now();
+    if (!this._lastTimeSave || now - this._lastTimeSave >= 1000) {
+      this._lastTimeSave = now;
+      const { setEpisodeTime } = await import("./storage.js");
+      await setEpisodeTime(this.episode.title, time);
+    }
   }
 
   async handlePlaybackRateChange({ detail: { rate } }) {
